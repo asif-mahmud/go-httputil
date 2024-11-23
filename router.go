@@ -22,9 +22,9 @@ type RouteHandler interface {
 }
 
 type routeHandler struct {
-	route       string
-	mux         *Mux
-	middlewares []Middleware
+	route           string
+	rootMiddlewares []Middleware
+	middlewares     []Middleware
 }
 
 // Use implements Router.
@@ -37,7 +37,7 @@ func (r *routeHandler) createHandler(method string, handler Handler) {
 	var h http.Handler
 	h = http.HandlerFunc(handler)
 
-	for _, m := range r.mux.globalMiddlewares {
+	for _, m := range r.rootMiddlewares {
 		h = m(h)
 	}
 
@@ -50,9 +50,9 @@ func (r *routeHandler) createHandler(method string, handler Handler) {
 
 func newRouter(r *routeHandler) *routeHandler {
 	return &routeHandler{
-		route:       r.route,
-		mux:         r.mux,
-		middlewares: []Middleware{},
+		route:           r.route,
+		rootMiddlewares: r.rootMiddlewares,
+		middlewares:     []Middleware{},
 	}
 }
 

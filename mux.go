@@ -1,15 +1,21 @@
 package gohttputil
 
-import "net/http"
+import (
+	"net/http"
+	"slices"
+)
 
 type Mux struct {
 	globalMiddlewares []Middleware
 }
 
-var (
-	_ = (http.Handler)(&Mux{})
-	_ = (Router)(&Mux{})
-)
+// Group implements Grouper.
+func (m *Mux) Group(prefix string) Group {
+	return &group{
+		prefix:      prefix,
+		middlewares: slices.Clone(m.globalMiddlewares),
+	}
+}
 
 func New() *Mux {
 	return &Mux{
@@ -28,8 +34,14 @@ func (r *Mux) Use(middlewares ...Middleware) *Mux {
 
 func (r *Mux) Route(route string) RouteHandler {
 	return &routeHandler{
-		route:       route,
-		mux:         r,
-		middlewares: []Middleware{},
+		route:           route,
+		rootMiddlewares: r.globalMiddlewares,
+		middlewares:     []Middleware{},
 	}
 }
+
+var (
+	_ = (http.Handler)(&Mux{})
+	_ = (Router)(&Mux{})
+	_ = (Grouper)(&Mux{})
+)
