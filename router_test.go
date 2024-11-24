@@ -30,6 +30,20 @@ func globalMiddleware(h http.Handler) http.Handler {
 	})
 }
 
+func globalMiddleware1(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("X-Global-Middleware1", "1")
+		h.ServeHTTP(w, r)
+	})
+}
+
+func globalMiddleware2(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("X-Global-Middleware2", "2")
+		h.ServeHTTP(w, r)
+	})
+}
+
 func middleware1(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("X-Middleware1", "1")
