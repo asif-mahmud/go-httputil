@@ -1,6 +1,9 @@
 package gohttputil
 
-import "slices"
+import (
+	"net/http"
+	"slices"
+)
 
 // Grouper defines interface to create a new Group.
 type Grouper interface {
@@ -23,6 +26,7 @@ type Group interface {
 }
 
 type group struct {
+	mux         *http.ServeMux
 	prefix      string
 	middlewares []Middleware
 }
@@ -36,6 +40,7 @@ func (g *group) Use(middlewares ...Middleware) Group {
 // Route implements Group.
 func (g *group) Route(route string, router GroupRouter) Group {
 	router(&routeHandler{
+		mux:             g.mux,
 		route:           g.prefix + route,
 		rootMiddlewares: slices.Clone(g.middlewares),
 		middlewares:     []Middleware{},

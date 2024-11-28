@@ -112,7 +112,7 @@ func TestGroup(t *testing.T) {
 		w := httptest.NewRecorder()
 		r := httptest.NewRequest(c.method, c.route, nil)
 
-		http.DefaultServeMux.ServeHTTP(w, r)
+		m.ServeHTTP(w, r)
 
 		data, err := io.ReadAll(w.Body)
 

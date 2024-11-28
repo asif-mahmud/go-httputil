@@ -4,6 +4,7 @@ go 1.23.2
 
 require (
 	github.com/asif-mahmud/go-log v1.0.0
+	github.com/rs/cors v1.11.1
 	github.com/stretchr/testify v1.9.0
 )
 

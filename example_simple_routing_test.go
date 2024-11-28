@@ -35,14 +35,10 @@ func Example_simpleRouting() {
 		Use(middleware1).
 		Delete(handler2)
 
-	// you can use nil as handler because all routes are
-	// attached to http.DefaultServeMux.
-	log.Fatal(http.ListenAndServe(":3000", nil))
-
-	// or you can use the created mux for clarity
+	// you can use the created mux now
 	log.Fatal(http.ListenAndServe(":3000", m))
 
-	// or you can use http.Server
+	// or you can use http.Server with handler set to the mux
 	server := http.Server{
 		Handler: m,
 		Addr:    ":3000",

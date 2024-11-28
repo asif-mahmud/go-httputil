@@ -95,14 +95,19 @@ func methodHandler(t *testing.T, method, path string) {
 		"X-Middleware2":       {"2"},
 	}
 
-	checkResponse(t, method, path, expectedBody, expectedHeader)
+	checkResponse(t, m, method, path, expectedBody, expectedHeader)
 }
 
-func checkResponse(t *testing.T, method, path, expectedBody string, expectedHeader http.Header) {
+func checkResponse(
+	t *testing.T,
+	h http.Handler,
+	method, path, expectedBody string,
+	expectedHeader http.Header,
+) {
 	req := httptest.NewRequest(method, path, nil)
 	w := httptest.NewRecorder()
 
-	http.DefaultServeMux.ServeHTTP(w, req)
+	h.ServeHTTP(w, req)
 
 	data, err := io.ReadAll(w.Body)
 
@@ -169,6 +174,6 @@ func TestMultiple(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		checkResponse(t, c.method, c.path, c.expectedBody, c.expectedHeader)
+		checkResponse(t, m, c.method, c.path, c.expectedBody, c.expectedHeader)
 	}
 }

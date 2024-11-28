@@ -3,6 +3,8 @@ package helpers
 import (
 	"encoding/json"
 	"log/slog"
+
+	golog "github.com/asif-mahmud/go-log"
 )
 
 // ToJson marshals any data into json string and ignores any error.
@@ -10,9 +12,9 @@ import (
 func ToJson(data any) string {
 	j, e := json.Marshal(data)
 	if e != nil {
-		slog.Error("error marshaling data to json", map[string]any{
+		slog.Error("error marshaling data to json", golog.Extra(map[string]any{
 			"error": e.Error(),
-		})
+		}))
 		return ""
 	}
 	return string(j)

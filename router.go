@@ -41,6 +41,7 @@ type RouteHandler interface {
 }
 
 type routeHandler struct {
+	mux             *http.ServeMux
 	route           string
 	rootMiddlewares []Middleware
 	middlewares     []Middleware
@@ -64,11 +65,12 @@ func (r *routeHandler) createHandler(method string, handler Handler) {
 		h = m(h)
 	}
 
-	http.Handle(fmt.Sprintf("%s %s", method, r.route), h)
+	r.mux.Handle(fmt.Sprintf("%s %s", method, r.route), h)
 }
 
 func newRouter(r *routeHandler) *routeHandler {
 	return &routeHandler{
+		mux:             r.mux,
 		route:           r.route,
 		rootMiddlewares: slices.Clone(r.rootMiddlewares),
 		middlewares:     []Middleware{},

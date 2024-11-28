@@ -3,14 +3,17 @@ package gohttputil
 import (
 	"net/http"
 	"slices"
+
+	"github.com/rs/cors"
 )
 
 // Mux is a wrapper around the http.ServeMux.
 // It provides a http.Handler implementation that
-// basically calls http.DefaultServeMux.ServeHTTP.
+// basically calls http.ServeMux.ServeHTTP with or
+// without CORS wrapper.
 //
 // Any route handler attached through this Mux adds that route
-// to the http.DefaultServeMux by wrapping middlewares
+// to the internal http.ServeMux by wrapping middlewares
 // from different levels (global, group level or route level).
 //
 // Global middlewares are added by Mux.Use method. These middlewares
@@ -20,22 +23,28 @@ import (
 //
 // Route level middlewares are applied per route per method.
 type Mux struct {
+	mux         *http.ServeMux
 	middlewares []Middleware
+	corsHandler *cors.Cors
 }
 
 // New creates a new instance of Mux.
-// Multiple instances of the Mux doesn't isolate their routes
-// as the routes are directly attached to the http.DefaultServeMux.
 func New() *Mux {
 	return &Mux{
+		mux:         &http.ServeMux{},
 		middlewares: []Middleware{},
 	}
 }
 
 // ServeHTTP implements http.Handler.
-// This just calls http.DefaultServeMux.ServeHTTP.
+// This calls the internal http.ServeMux.ServeHTTP with
+// or without CORS wrapper handler.
 func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	http.DefaultServeMux.ServeHTTP(w, r)
+	if m.corsHandler != nil {
+		m.corsHandler.ServeHTTP(w, r, m.mux.ServeHTTP)
+		return
+	}
+	m.mux.ServeHTTP(w, r)
 }
 
 // Use appends middlewares to global middlewares.
@@ -47,6 +56,7 @@ func (r *Mux) Use(middlewares ...Middleware) *Mux {
 // Route implements Router.
 func (r *Mux) Route(route string) RouteHandler {
 	return &routeHandler{
+		mux:             r.mux,
 		route:           route,
 		rootMiddlewares: slices.Clone(r.middlewares),
 		middlewares:     []Middleware{},
@@ -56,9 +66,21 @@ func (r *Mux) Route(route string) RouteHandler {
 // Group implements Grouper.
 func (m *Mux) Group(prefix string) Group {
 	return &group{
+		mux:         m.mux,
 		prefix:      prefix,
 		middlewares: slices.Clone(m.middlewares),
 	}
+}
+
+// EnableCORS wraps the internal http.ServeMux with CORS handler.
+// Without any option in argument, it allows all methods, origins and
+// headers.
+func (m *Mux) EnableCORS(opt ...cors.Options) {
+	c := cors.AllowAll()
+	if len(opt) > 0 {
+		c = cors.New(opt[0])
+	}
+	m.corsHandler = c
 }
 
 var (
