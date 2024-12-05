@@ -8,7 +8,11 @@ import (
 	golog "github.com/asif-mahmud/go-log"
 )
 
-const jsonErrorMsg = `{"status":false,"message": "Sorry, something went wrong! Please try again later.","data":null}`
+// ErrorMsg is common error message sent to the client if something went wrong
+// unexpectedly while processing the request
+const ErrorMsg = "Sorry, something went wrong! Please try again later."
+
+const jsonErrorMsg = `{"status":false,"message":` + ErrorMsg + `,"data":null}`
 
 func sendJson(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Add("Content-Type", "application/json")
