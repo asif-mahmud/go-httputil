@@ -25,9 +25,14 @@ type myClaims struct {
 	jwt.RegisteredClaims
 }
 
-func dummyClaims() myClaims {
+type user struct {
+	Id       int
+	UserType string
+}
+
+func dummyClaims(u ...user) myClaims {
 	n := time.Now()
-	return myClaims{
+	c := myClaims{
 		Id:       1,
 		UserType: "Customer",
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -39,6 +44,13 @@ func dummyClaims() myClaims {
 			ID:        "1",
 		},
 	}
+
+	if len(u) > 0 {
+		c.Id = u[0].Id
+		c.UserType = u[0].UserType
+	}
+
+	return c
 }
 
 func TestSigning(t *testing.T) {
@@ -113,10 +125,6 @@ func TestNoPaylodTypeFailed(t *testing.T) {
 }
 
 func TestWithPaylodType(t *testing.T) {
-	type user struct {
-		Id       int
-		UserType string
-	}
 	middlewares.SetupJWT(
 		middlewares.JWTWithSecret(jwtSecret),
 		middlewares.JWTWithPayloadType(user{}),

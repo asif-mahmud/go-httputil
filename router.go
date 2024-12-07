@@ -6,9 +6,6 @@ import (
 	"slices"
 )
 
-// Handler
-type Handler func(http.ResponseWriter, *http.Request)
-
 // Router interface to create a RouteHandler
 type Router interface {
 	Route(string) RouteHandler
@@ -20,24 +17,24 @@ type RouteHandler interface {
 	// This should be called before calling any of the http method handlers (Get,
 	// Post, Put, Patch or Delete method). After calling an http method handler
 	// this list of middlewares are cleared so that user can define different set
-	// of middlewares for next http method handler. So route level middlewares
+	// of middlewares for next http method handler. Soel middlewares
 	// are defined per route per http method.
 	Use(...Middleware) RouteHandler
 
 	// Get attaches handler to http GET method
-	Get(Handler) RouteHandler
+	Get(http.HandlerFunc) RouteHandler
 
 	// Post attaches handler to http POST method
-	Post(Handler) RouteHandler
+	Post(http.HandlerFunc) RouteHandler
 
 	// Put attaches handler to http PUT method
-	Put(Handler) RouteHandler
+	Put(http.HandlerFunc) RouteHandler
 
 	// Patch attaches handler to http PATCH method
-	Patch(Handler) RouteHandler
+	Patch(http.HandlerFunc) RouteHandler
 
 	// Delete attaches handler to http DELETE method
-	Delete(Handler) RouteHandler
+	Delete(http.HandlerFunc) RouteHandler
 }
 
 type routeHandler struct {
@@ -53,16 +50,24 @@ func (r *routeHandler) Use(middlewares ...Middleware) RouteHandler {
 	return r
 }
 
-func (r *routeHandler) createHandler(method string, handler Handler) {
+func (r *routeHandler) createHandler(method string, handler http.HandlerFunc) {
 	var h http.Handler
 	h = http.HandlerFunc(handler)
 
-	for _, m := range r.rootMiddlewares {
-		h = m(h)
+	// for _, m := range r.middlewares {
+	// 	h = m(h)
+	// }
+
+	for i := len(r.middlewares) - 1; i >= 0; i-- {
+		h = r.middlewares[i](h)
 	}
 
-	for _, m := range r.middlewares {
-		h = m(h)
+	// for _, m := range r.rootMiddlewares {
+	// 	h = m(h)
+	// }
+
+	for i := len(r.rootMiddlewares) - 1; i >= 0; i-- {
+		h = r.rootMiddlewares[i](h)
 	}
 
 	r.mux.Handle(fmt.Sprintf("%s %s", method, r.route), h)
@@ -78,31 +83,31 @@ func newRouter(r *routeHandler) *routeHandler {
 }
 
 // Get implements RouteHandler.
-func (r *routeHandler) Get(handler Handler) RouteHandler {
+func (r *routeHandler) Get(handler http.HandlerFunc) RouteHandler {
 	r.createHandler(http.MethodGet, handler)
 	return newRouter(r)
 }
 
 // Post implements RouteHandler.
-func (r *routeHandler) Post(handler Handler) RouteHandler {
+func (r *routeHandler) Post(handler http.HandlerFunc) RouteHandler {
 	r.createHandler(http.MethodPost, handler)
 	return newRouter(r)
 }
 
 // Put implements RouteHandler.
-func (r *routeHandler) Put(handler Handler) RouteHandler {
+func (r *routeHandler) Put(handler http.HandlerFunc) RouteHandler {
 	r.createHandler(http.MethodPut, handler)
 	return newRouter(r)
 }
 
 // Patch implements RouteHandler.
-func (r *routeHandler) Patch(handler Handler) RouteHandler {
+func (r *routeHandler) Patch(handler http.HandlerFunc) RouteHandler {
 	r.createHandler(http.MethodPatch, handler)
 	return newRouter(r)
 }
 
 // Delete implements RouteHandler.
-func (r *routeHandler) Delete(handler Handler) RouteHandler {
+func (r *routeHandler) Delete(handler http.HandlerFunc) RouteHandler {
 	r.createHandler(http.MethodDelete, handler)
 	return newRouter(r)
 }
