@@ -14,7 +14,7 @@ func BindUrlValues(ctx context.Context, v url.Values, s any) error {
 		return err
 	}
 
-	return conform.Struct(ctx, v)
+	return conform.Struct(ctx, s)
 }
 
 // BindJSON binds body into a struct instance.

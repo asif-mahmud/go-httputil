@@ -21,7 +21,7 @@ func ValidateQuery(dto any) gohttputil.Middleware {
 					return validator.BindUrlValues(r.Context(), r.URL.Query(), p)
 				},
 				queryCtxKey,
-			)
+			).ServeHTTP(w, r)
 		}
 
 		return http.HandlerFunc(fn)

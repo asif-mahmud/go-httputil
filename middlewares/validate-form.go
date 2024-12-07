@@ -21,7 +21,7 @@ func ValidateForm(dto any) gohttputil.Middleware {
 					return validator.BindUrlValues(r.Context(), r.Form, p)
 				},
 				formCtxKey,
-			)
+			).ServeHTTP(w, r)
 		}
 
 		return http.HandlerFunc(fn)

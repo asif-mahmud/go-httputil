@@ -30,7 +30,7 @@ func ValidateJSON(dto any) gohttputil.Middleware {
 					return validator.BindJSON(r.Context(), r.Body, p)
 				},
 				jsonCtxKey,
-			)
+			).ServeHTTP(w, r)
 		}
 
 		return http.HandlerFunc(fn)
