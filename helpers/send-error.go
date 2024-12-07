@@ -12,7 +12,7 @@ import "net/http"
 //	   "data": data
 //	}
 func SendError(w http.ResponseWriter, status int, message string, data interface{}) {
-	sendJson(w, status, map[string]any{
+	sendJSON(w, status, map[string]any{
 		"status":  false,
 		"message": message,
 		"data":    data,
