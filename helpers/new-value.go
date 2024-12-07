@@ -1,12 +1,12 @@
-package middlewares
+package helpers
 
 import (
 	"errors"
 	"reflect"
 )
 
-// newValue creates a pointer to a new zero value of the type of v.
-func newValue(v any) (reflect.Value, error) {
+// NewValue creates a pointer to a new zero value of the type of v.
+func NewValue(v any) (reflect.Value, error) {
 	vt := reflect.TypeOf(v)
 
 	switch vt.Kind() {

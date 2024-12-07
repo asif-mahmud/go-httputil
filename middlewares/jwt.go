@@ -133,7 +133,7 @@ func Authenticate(queryKeys ...string) gohttputil.Middleware {
 				return
 			}
 
-			p, err := newValue(DefaultJWT.payloadType)
+			p, err := helpers.NewValue(DefaultJWT.payloadType)
 			if err != nil {
 				slog.Error("Failed to initiate JWT payload type", golog.Extra(map[string]any{
 					"error": err.Error(),

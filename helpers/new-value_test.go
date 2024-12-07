@@ -1,8 +1,9 @@
-package middlewares
+package helpers_test
 
 import (
 	"testing"
 
+	"github.com/asif-mahmud/go-httputil/helpers"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,7 +15,7 @@ func TestNewValue(t *testing.T) {
 
 	var expectedZero testStruct
 
-	nz, err := newValue(expectedZero)
+	nz, err := helpers.NewValue(expectedZero)
 
 	assert.Nil(t, err)
 
@@ -40,7 +41,7 @@ func TestNewPtrValue(t *testing.T) {
 
 	var expectedZero testStruct
 
-	nz, err := newValue(&expectedZero)
+	nz, err := helpers.NewValue(&expectedZero)
 
 	assert.Nil(t, err)
 
