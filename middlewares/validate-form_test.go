@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/asif-mahmud/go-httputil/helpers"
@@ -52,8 +53,8 @@ func TestValidateForm(t *testing.T) {
 	}
 
 	for _, c := range testCases {
-		r := httptest.NewRequest(http.MethodPost, "/", nil)
-		r.Form = c.payload
+		r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(c.payload.Encode()))
+		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		w := httptest.NewRecorder()
 
 		h.ServeHTTP(w, r)

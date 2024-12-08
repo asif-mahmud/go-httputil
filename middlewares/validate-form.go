@@ -1,13 +1,17 @@
 package middlewares
 
 import (
+	"errors"
 	"net/http"
 
 	gohttputil "github.com/asif-mahmud/go-httputil"
 	"github.com/asif-mahmud/go-httputil/validator"
 )
 
-const formCtxKey = "_formPayload"
+const (
+	formCtxKey = "_formPayload"
+	maxBytes   = 100 * 1024 * 1024
+)
 
 // ValidateForm validates request body and stores validated payload in
 // the request's context.
@@ -18,7 +22,26 @@ func ValidateForm(dto any) gohttputil.Middleware {
 				next,
 				dto,
 				func(p any) error {
-					return validator.BindUrlValues(r.Context(), r.Form, p)
+					header := r.Header.Get("content-type")
+
+					switch header {
+					case "multipart/form-data":
+						if err := r.ParseMultipartForm(maxBytes); err != nil {
+							return err
+						}
+
+						return validator.BindUrlValues(r.Context(), r.Form, p)
+
+					case "application/x-www-form-urlencoded":
+						if err := r.ParseForm(); err != nil {
+							return err
+						}
+
+						return validator.BindUrlValues(r.Context(), r.Form, p)
+
+					default:
+						return errors.New("invalid request")
+					}
 				},
 				formCtxKey,
 			).ServeHTTP(w, r)
