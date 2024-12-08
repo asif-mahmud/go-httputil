@@ -3,6 +3,7 @@ package middlewares
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	gohttputil "github.com/asif-mahmud/go-httputil"
 	"github.com/asif-mahmud/go-httputil/validator"
@@ -24,22 +25,19 @@ func ValidateForm(dto any) gohttputil.Middleware {
 				func(p any) error {
 					header := r.Header.Get("content-type")
 
-					switch header {
-					case "multipart/form-data":
-						if err := r.ParseMultipartForm(maxBytes); err != nil {
-							return err
-						}
-
-						return validator.BindUrlValues(r.Context(), r.Form, p)
-
-					case "application/x-www-form-urlencoded":
+					if header == "application/x-www-form-urlencoded" {
 						if err := r.ParseForm(); err != nil {
 							return err
 						}
 
 						return validator.BindUrlValues(r.Context(), r.Form, p)
+					} else if strings.HasPrefix(header, "multipart/form-data") {
+						if err := r.ParseMultipartForm(maxBytes); err != nil {
+							return err
+						}
 
-					default:
+						return validator.BindUrlValues(r.Context(), r.MultipartForm.Value, p)
+					} else {
 						return errors.New("invalid request")
 					}
 				},
