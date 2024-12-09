@@ -22,6 +22,10 @@ func Logger(next http.Handler) http.Handler {
 			golog.UserAgent(r.UserAgent()),
 			golog.Length(int(s.Written)),
 			golog.Latency(s.Duration),
+			slog.Attr{
+				Key:   "pattern",
+				Value: slog.StringValue(r.Pattern),
+			},
 		)
 	}
 
