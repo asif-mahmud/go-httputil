@@ -24,6 +24,9 @@ var swaggerDoc []byte
 // To attach this handler to a path do this -
 //
 // mux.Route("/swagger/{path...}").Get(HandleSwagger(doc, "path"))
+//
+// This will let the handler serve swagger.json and other static files
+// under /swagger path.
 func HandleSwagger(doc io.Reader, pathKey string) http.HandlerFunc {
 	data, err := io.ReadAll(doc)
 	if err != nil {
