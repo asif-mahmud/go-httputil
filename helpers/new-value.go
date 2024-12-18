@@ -10,9 +10,6 @@ func NewValue(v any) (reflect.Value, error) {
 	vt := reflect.TypeOf(v)
 
 	switch vt.Kind() {
-	case reflect.Slice:
-		return reflect.New(vt), nil
-
 	case reflect.Pointer:
 		return reflect.New(vt.Elem()), nil
 
