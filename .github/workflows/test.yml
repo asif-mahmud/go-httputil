@@ -1,7 +1,8 @@
-name: Go
+name: Go Test
 
 on:
   push:
+  pull_request:
 
 jobs:
   test:
