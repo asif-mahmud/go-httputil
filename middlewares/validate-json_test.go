@@ -28,9 +28,10 @@ func TestValidateJSON(t *testing.T) {
 	)
 
 	type testCase struct {
-		payload          string
-		expectedStatus   int
-		expectedResponse string
+		payload           string
+		expectedStatus    int
+		expectedResponse  string
+		contentTypeHeader string
 	}
 
 	testCases := []testCase{
@@ -38,22 +39,39 @@ func TestValidateJSON(t *testing.T) {
 			`{"age":0.0,"name":""}`,
 			http.StatusBadRequest,
 			`{"data":{"age":"Age must be greater than 0.0","name":"Name is a required field"},"message":"Validation error","status":false}`,
+			"application/json",
 		},
 		{
 			`{"age":13.0,"name":""}`,
 			http.StatusBadRequest,
 			`{"data":{"name":"Name is a required field"},"message":"Validation error","status":false}`,
+			"application/json",
 		},
 		{
 			`{"age":13.5,"name":"Asif"}`,
 			http.StatusOK,
 			`{"data":{"age":13.5,"name":"Asif"},"message":"Success","status":true}`,
+			"application/json",
+		},
+		{
+			`{"age":13.5,"name":"Asif"}`,
+			http.StatusOK,
+			`{"data":{"age":13.5,"name":"Asif"},"message":"Success","status":true}`,
+			"application/json; charset=UTF-8",
+		},
+		{
+			`{"age":13.5,"name":"Asif"}`,
+			http.StatusBadRequest,
+			`{"data":null,"message":"Invalid request","status":false}`,
+			"",
 		},
 	}
 
 	for _, c := range testCases {
 		r := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(c.payload)))
-		r.Header.Add("Content-Type", "application/json")
+		if len(c.contentTypeHeader) > 0 {
+			r.Header.Add("Content-Type", c.contentTypeHeader)
+		}
 		w := httptest.NewRecorder()
 
 		h.ServeHTTP(w, r)

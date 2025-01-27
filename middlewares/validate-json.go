@@ -3,6 +3,7 @@ package middlewares
 import (
 	"log/slog"
 	"net/http"
+	"strings"
 
 	gohttputil "github.com/asif-mahmud/go-httputil"
 	"github.com/asif-mahmud/go-httputil/validator"
@@ -15,8 +16,10 @@ const jsonCtxKey = "_jsonPaylod"
 func ValidateJSON(dto any) gohttputil.Middleware {
 	m := func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
-			// check header confomity
-			if r.Header.Get("content-type") != "application/json" {
+			// check header conformity
+			contentType := r.Header.Get("content-type")
+			contentType = strings.ToLower(strings.TrimSpace(strings.Split(contentType, ";")[0]))
+			if contentType != "application/json" {
 				slog.Error("Looking for json body, but json header is not set")
 				badrequest(w, "Invalid request", nil)
 				return
