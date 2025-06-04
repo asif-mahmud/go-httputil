@@ -14,7 +14,8 @@ const ErrorMsg = "Sorry, something went wrong! Please try again later."
 
 const jsonErrorMsg = `{"status":false,"message":` + ErrorMsg + `,"data":null}`
 
-func sendJSON(w http.ResponseWriter, status int, data interface{}) {
+// SendJSON writes JSON data to w.
+func SendJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Add("Content-Type", "application/json")
 
 	str, err := json.Marshal(data)
