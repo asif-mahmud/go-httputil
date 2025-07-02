@@ -123,3 +123,50 @@ func TestGroup(t *testing.T) {
 		assert.Equal(t, c.expectedHeader, w.Header())
 	}
 }
+
+func TestGroupWithoutChaining(t *testing.T) {
+	m := gohttputil.New()
+
+	m.Group("/api/v1").Route("/users", func(rh gohttputil.RouteHandler) {
+		rh.Use(middleware1).Get(handler1)
+
+		rh.Use(middleware2).Post(handler2)
+	})
+
+	type testCase struct {
+		route          string
+		method         string
+		expectedResp   string
+		expectedHeader http.Header
+	}
+
+	cases := []testCase{
+		{
+			"/api/v1/users", http.MethodGet, `{"success":true}`, http.Header{
+				"Content-Type":  {"application/json"},
+				"X-Middleware1": {"1"},
+			},
+		},
+		{
+			"/api/v1/users", http.MethodPost, `{"success":true,"method":"POST"}`, http.Header{
+				"Content-Type":  {"application/json"},
+				"X-Middleware2": {"2"},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(c.method, c.route, nil)
+
+		m.ServeHTTP(w, r)
+
+		data, err := io.ReadAll(w.Body)
+
+		assert.Nil(t, err)
+
+		assert.Equal(t, c.expectedResp, string(data))
+
+		assert.Equal(t, c.expectedHeader, w.Header())
+	}
+}

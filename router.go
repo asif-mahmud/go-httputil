@@ -54,17 +54,9 @@ func (r *routeHandler) createHandler(method string, handler http.HandlerFunc) {
 	var h http.Handler
 	h = http.HandlerFunc(handler)
 
-	// for _, m := range r.middlewares {
-	// 	h = m(h)
-	// }
-
 	for i := len(r.middlewares) - 1; i >= 0; i-- {
 		h = r.middlewares[i](h)
 	}
-
-	// for _, m := range r.rootMiddlewares {
-	// 	h = m(h)
-	// }
 
 	for i := len(r.rootMiddlewares) - 1; i >= 0; i-- {
 		h = r.rootMiddlewares[i](h)
@@ -73,43 +65,40 @@ func (r *routeHandler) createHandler(method string, handler http.HandlerFunc) {
 	r.mux.Handle(fmt.Sprintf("%s %s", method, r.route), h)
 }
 
-func newRouter(r *routeHandler) *routeHandler {
-	return &routeHandler{
-		mux:             r.mux,
-		route:           r.route,
-		rootMiddlewares: slices.Clone(r.rootMiddlewares),
-		middlewares:     []Middleware{},
-	}
+func (r *routeHandler) reset() RouteHandler {
+	r.middlewares = []Middleware{}
+	r.rootMiddlewares = slices.Clone(r.rootMiddlewares)
+	return r
 }
 
 // Get implements RouteHandler.
 func (r *routeHandler) Get(handler http.HandlerFunc) RouteHandler {
 	r.createHandler(http.MethodGet, handler)
-	return newRouter(r)
+	return r.reset()
 }
 
 // Post implements RouteHandler.
 func (r *routeHandler) Post(handler http.HandlerFunc) RouteHandler {
 	r.createHandler(http.MethodPost, handler)
-	return newRouter(r)
+	return r.reset()
 }
 
 // Put implements RouteHandler.
 func (r *routeHandler) Put(handler http.HandlerFunc) RouteHandler {
 	r.createHandler(http.MethodPut, handler)
-	return newRouter(r)
+	return r.reset()
 }
 
 // Patch implements RouteHandler.
 func (r *routeHandler) Patch(handler http.HandlerFunc) RouteHandler {
 	r.createHandler(http.MethodPatch, handler)
-	return newRouter(r)
+	return r.reset()
 }
 
 // Delete implements RouteHandler.
 func (r *routeHandler) Delete(handler http.HandlerFunc) RouteHandler {
 	r.createHandler(http.MethodDelete, handler)
-	return newRouter(r)
+	return r.reset()
 }
 
 var _ = (RouteHandler)(&routeHandler{})
