@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"bytes"
-	"embed"
 	"io"
+	"io/fs"
 	"log/slog"
 	"mime"
 	"net/http"
@@ -14,27 +14,20 @@ import (
 	golog "github.com/asif-mahmud/go-log"
 )
 
-//go:embed dist/*
-var distFS embed.FS
-
-var swaggerDoc []byte
-
-// HandleSwagger returns a handler function to serve swagger doc and related files.
-//
-// To attach this handler to a path do this -
-//
-// mux.Route("/swagger/{path...}").Get(HandleSwagger(doc, "path"))
-//
-// This will let the handler serve swagger.json and other static files
-// under /swagger path.
-func HandleSwagger(doc io.Reader, pathKey string) http.HandlerFunc {
+func swaggerHandlerFactory(
+	doc io.Reader,
+	pathKey string,
+	fsys fs.FS,
+	fsRootDir string,
+) http.HandlerFunc {
 	data, err := io.ReadAll(doc)
+	docData := []byte{}
 	if err != nil {
 		slog.Error("Failed to load swagger.json file", golog.Extra(map[string]any{
 			"error": err.Error(),
 		}))
 	} else {
-		swaggerDoc = bytes.Clone(data)
+		docData = bytes.Clone(data)
 	}
 
 	fn := func(w http.ResponseWriter, r *http.Request) {
@@ -47,18 +40,18 @@ func HandleSwagger(doc io.Reader, pathKey string) http.HandlerFunc {
 
 		// for swagger json file
 		if strings.HasSuffix(filePath, "swagger.json") {
-			if swaggerDoc == nil || len(swaggerDoc) == 0 {
+			if docData == nil || len(docData) == 0 {
 				helpers.SendError(w, http.StatusNotFound, "File not found", nil)
 				return
 			}
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write(swaggerDoc)
+			w.Write(docData)
 			return
 		}
 
 		// for static dist files
-		data, err := distFS.ReadFile(path.Join("dist", filePath))
+		data, err := fs.ReadFile(fsys, path.Join(fsRootDir, filePath))
 		if err != nil {
 			helpers.SendError(w, http.StatusNotFound, "File not found", nil)
 			return
