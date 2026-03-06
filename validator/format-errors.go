@@ -3,11 +3,8 @@ package validator
 import (
 	"strconv"
 	"strings"
-	"unicode"
 
 	vd "github.com/go-playground/validator/v10"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 )
 
 func setValueInMap(m map[string]interface{}, key string, value string) {
@@ -15,7 +12,8 @@ func setValueInMap(m map[string]interface{}, key string, value string) {
 	currMap := m
 
 	for i := 1; i < len(keys); i++ { // Start from 1 to skip "Data"
-		key := toCamelCase(keys[i])
+		// key := toCamelCase(keys[i])
+		key := keys[i]
 		last := i == len(keys)-1
 
 		if strings.Contains(key, "[") {
@@ -75,34 +73,37 @@ func handleMapKey(
 	return currMap
 }
 
-func toCamelCase(s string) string {
-	words := strings.Split(s, "_")
-	for i := 1; i < len(words); i++ {
-		words[i] = cases.Title(language.Und).String(words[i])
-	}
-	return lowerFirst(strings.Join(words, ""))
-}
-
-func lowerFirst(str string) string {
-	for i, v := range str {
-		return string(unicode.ToLower(v)) + str[i+1:]
-	}
-	return ""
-}
-
 // FormatErrors formats ValidationErrors into a map of error strings similar to
 // the source data type.
+//
+// Example DTO -
+//
+//	type Address struct {
+//		Street string `json:"street" validate:"required"`
+//	}
+//
+//	type User struct {
+//		Id        string    `json:"id" validate:"required"`
+//		UserName  string    `json:"userName" validate:"required"`
+//		Email     string    `json:"email" validate:"required,email"`
+//		Addresses []Address `json:"addresses" validate:"required,dive"`
+//		Books     []string  `json:"books" validate:"required,dive,min=10"`
+//	}
+//
+//	type RequestDTO struct {
+//		Data User `json:"data" validate:"required"`
+//	}
 //
 // Example validation error -
 //
 //	{
-//		"Data.Addresses[0].Street":"Street is a required field",
-//		"Data.Books[0]":"Books[0] must be at least 10 characters in length",
-//		"Data.Books[1]":"Books[1] must be at least 10 characters in length",
-//		"Data.Books[2]":"Books[2] is a required field",
-//		"Data.Email":"Email is a required field",
-//		"Data.Id":"Id is a required field",
-//		"Data.UserName":"UserName is a required field"
+//		"data.addresses[0].street":"street is a required field",
+//		"data.books[0]":"books[0] must be at least 10 characters in length",
+//		"data.books[1]":"books[1] must be at least 10 characters in length",
+//		"data.books[2]":"books[2] is a required field",
+//		"data.email":"email is a required field",
+//		"data.id":"id is a required field",
+//		"data.userName":"userName is a required field"
 //	}
 //
 // Corresponding error message after formatting -
@@ -110,26 +111,25 @@ func lowerFirst(str string) string {
 //	{
 //	  "addresses": [
 //	    {
-//	      "street": "Street is a required field"
+//	      "street": "street is a required field"
 //	    }
 //	  ],
 //	  "books": [
-//	    "Books[0] must be at least 10 characters in length",
-//	    "Books[1] must be at least 10 characters in length",
-//	    "Books[2] is a required field"
+//	    "books[0] must be at least 10 characters in length",
+//	    "books[1] must be at least 10 characters in length",
+//	    "books[2] is a required field"
 //	  ],
-//	  "email": "Email is a required field",
-//	  "id": "Id is a required field",
-//	  "userName": "UserName is a required field"
+//	  "email": "email is a required field",
+//	  "id": "id is a required field",
+//	  "userName": "userName is a required field"
 //	}
 func FormatErrors(err vd.ValidationErrors) map[string]any {
 	trans, _ := uni.GetTranslator("en")
-	tErrs := err.Translate(trans)
 
 	rv := map[string]any{}
 
-	for k, v := range tErrs {
-		setValueInMap(rv, k, v)
+	for _, e := range err {
+		setValueInMap(rv, e.Namespace(), e.Translate(trans))
 	}
 
 	return rv

@@ -2,16 +2,17 @@ package middlewares_test
 
 import (
 	"fmt"
-	"github.com/asif-mahmud/go-httputil/helpers"
-	_ "github.com/asif-mahmud/go-httputil/helpers"
-	"github.com/asif-mahmud/go-httputil/middlewares"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/asif-mahmud/go-httputil/helpers"
+	_ "github.com/asif-mahmud/go-httputil/helpers"
+	"github.com/asif-mahmud/go-httputil/middlewares"
 )
 
 type dto struct {
-	Id   int    `json:"id" path:"id" validate:"gt=0"`
+	Id   int    `json:"id"   path:"id"   validate:"gt=0"`
 	Name string `json:"name" path:"name" validate:"required,min=3"`
 }
 
@@ -74,7 +75,7 @@ func TestValidatePathMiddlewareInvalidName(t *testing.T) {
 		t.Errorf("Expected status code 400, got %v", status)
 	}
 
-	expectedResponse := `{"data":{"name":"Name must be at least 3 characters in length"},"message":"Validation error","status":false}`
+	expectedResponse := `{"data":{"name":"name must be at least 3 characters in length"},"message":"Validation error","status":false}`
 	if rr.Body.String() != expectedResponse {
 		t.Errorf("Expected response body %v, got %v", expectedResponse, rr.Body.String())
 	}

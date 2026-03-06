@@ -1,9 +1,10 @@
 package middlewares
 
 import (
+	"net/http"
+
 	gohttputil "github.com/asif-mahmud/go-httputil"
 	"github.com/asif-mahmud/go-httputil/validator"
-	"net/http"
 )
 
 const pathValueCtxKey = "_pathValuePayload"

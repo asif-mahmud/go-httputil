@@ -35,4 +35,7 @@ func init() {
 	// setup transformers
 	conform = modifiers.New()
 	scrub = scrubbers.New()
+
+	// setup field name extractor
+	validate.RegisterTagNameFunc(ExtractTagName)
 }

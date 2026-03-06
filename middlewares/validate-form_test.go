@@ -38,12 +38,12 @@ func TestValidateForm(t *testing.T) {
 		{
 			url.Values{"age": {"0.0"}, "name": {""}},
 			http.StatusBadRequest,
-			`{"data":{"age":"Age must be greater than 0.0","name":"Name is a required field"},"message":"Validation error","status":false}`,
+			`{"data":{"age":"age must be greater than 0.0","name":"name is a required field"},"message":"Validation error","status":false}`,
 		},
 		{
 			url.Values{"age": {"13.0"}, "name": {""}},
 			http.StatusBadRequest,
-			`{"data":{"name":"Name is a required field"},"message":"Validation error","status":false}`,
+			`{"data":{"name":"name is a required field"},"message":"Validation error","status":false}`,
 		},
 		{
 			url.Values{"age": {"13.5"}, "name": {"Asif"}},
