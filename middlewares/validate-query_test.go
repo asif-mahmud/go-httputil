@@ -64,3 +64,28 @@ func TestValidateQuery(t *testing.T) {
 		assert.Equal(t, c.expectedResponse, string(actual))
 	}
 }
+
+func TestValidateQuery_Slice(t *testing.T) {
+	type DTO struct {
+		Values []string `form:"value[]" validate:"required,min=2"`
+	}
+
+	h := middlewares.ValidateQuery(DTO{})(
+		http.HandlerFunc(func(wr http.ResponseWriter, req *http.Request) {
+			d := middlewares.QueryPayload(req).(*DTO)
+			helpers.SendData(wr, d)
+		}),
+	)
+
+	// Build query with multiple values
+	q := url.Values{}
+	q.Add("value[]", "test1")
+	q.Add("value[]", "test2")
+
+	r := httptest.NewRequest(http.MethodGet, "/?"+q.Encode(), nil)
+	w := httptest.NewRecorder()
+
+	h.ServeHTTP(w, r)
+
+	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
+}

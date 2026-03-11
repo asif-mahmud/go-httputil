@@ -58,3 +58,27 @@ func TestNewPtrValue(t *testing.T) {
 
 	assert.NotEqual(t, expectedZero, *nzv)
 }
+
+func TestNewValue_WithInt(t *testing.T) {
+	nzInt, err := helpers.NewValue(10)
+	assert.Nil(t, err)
+	assert.NotNil(t, nzInt.Interface())
+	_, ok := nzInt.Interface().(*int)
+	assert.True(t, ok)
+}
+
+func TestNewValue_WithSlice(t *testing.T) {
+	type Data struct{ Value string }
+	var expectedSlice []*Data
+	nzSlice, err := helpers.NewValue(expectedSlice)
+	assert.Nil(t, err)
+	assert.NotNil(t, nzSlice.Interface())
+	_, ok := nzSlice.Interface().(*[]*Data)
+	assert.True(t, ok)
+}
+
+func TestNewValue_WithNil(t *testing.T) {
+	_, err := helpers.NewValue(nil)
+	assert.NotNil(t, err)
+	assert.Equal(t, "unsupported type: nil interface", err.Error())
+}

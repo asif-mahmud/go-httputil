@@ -1,7 +1,9 @@
 package middlewares_test
 
 import (
+	"bytes"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -65,4 +67,57 @@ func TestValidateForm(t *testing.T) {
 		assert.Equal(t, c.expectedStatus, w.Result().StatusCode)
 		assert.Equal(t, c.expectedResponse, string(actual))
 	}
+}
+
+func TestValidateForm_Slice(t *testing.T) {
+	type Data struct {
+		Value string `form:"value[]" validate:"required"`
+	}
+
+	type DTO []*Data // Although binding to []*Data from form might be tricky, we just ensure it doesn't crash
+
+	h := middlewares.ValidateForm(DTO{})(
+		http.HandlerFunc(func(wr http.ResponseWriter, req *http.Request) {
+			wr.WriteHeader(http.StatusOK)
+		}),
+	)
+
+	r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("value[]=test1&value[]=test2"))
+	r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+
+	h.ServeHTTP(w, r)
+
+	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
+}
+
+func TestValidateForm_MultipartSlice(t *testing.T) {
+	type DTO struct {
+		Values []string `form:"value" validate:"required"`
+	}
+
+	h := middlewares.ValidateForm(DTO{})(
+		http.HandlerFunc(func(wr http.ResponseWriter, req *http.Request) {
+			d := middlewares.FormPayload(req).(*DTO)
+			assert.Len(t, d.Values, 2)
+			assert.Equal(t, "test1", d.Values[0])
+			assert.Equal(t, "test2", d.Values[1])
+
+			wr.WriteHeader(http.StatusOK)
+		}),
+	)
+
+	var b bytes.Buffer
+	mw := multipart.NewWriter(&b)
+	_ = mw.WriteField("value[0]", "test1")
+	_ = mw.WriteField("value[1]", "test2")
+	_ = mw.Close()
+
+	r := httptest.NewRequest(http.MethodPost, "/", &b)
+	r.Header.Add("Content-Type", mw.FormDataContentType())
+	w := httptest.NewRecorder()
+
+	h.ServeHTTP(w, r)
+
+	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
 }

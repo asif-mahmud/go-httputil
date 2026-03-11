@@ -83,3 +83,32 @@ func TestValidateJSON(t *testing.T) {
 		assert.Equal(t, c.expectedResponse, string(actual))
 	}
 }
+
+func TestValidateJSON_Slice(t *testing.T) {
+	type Data struct {
+		Value string `json:"value" validate:"required"`
+	}
+
+	type DTO []*Data
+
+	h := middlewares.ValidateJSON(DTO{})(
+		http.HandlerFunc(func(wr http.ResponseWriter, req *http.Request) {
+			d := middlewares.JSONPayload(req).(*DTO)
+			helpers.SendData(wr, d)
+		}),
+	)
+
+	payload := `[{"value": "test1"}, {"value": "test2"}]`
+	r := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(payload)))
+	r.Header.Add("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	h.ServeHTTP(w, r)
+
+	actual, err := io.ReadAll(w.Result().Body)
+
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
+	assert.Contains(t, string(actual), `"test1"`)
+	assert.Contains(t, string(actual), `"test2"`)
+}

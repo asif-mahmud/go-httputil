@@ -18,7 +18,7 @@ func BindUrlValues(ctx context.Context, v url.Values, s any) error {
 		return err
 	}
 
-	return conform.Struct(ctx, s)
+	return runMold(ctx, s)
 }
 
 // BindJSON binds body into a struct instance.
@@ -29,7 +29,7 @@ func BindJSON(ctx context.Context, body io.ReadCloser, s any) error {
 		return err
 	}
 
-	return conform.Struct(ctx, s)
+	return runMold(ctx, s)
 }
 
 // BindPathValues binds values from the URL path to the struct fields
@@ -73,7 +73,46 @@ func BindPathValues(ctx context.Context, r *http.Request, s any) error {
 		}
 	}
 
-	return conform.Struct(ctx, s)
+	return runMold(ctx, s)
+}
+
+// runMold applies mold transformations to struct values, recursing into slices if needed
+func runMold(ctx context.Context, s any) error {
+	v := reflect.ValueOf(s)
+	if v.Kind() == reflect.Pointer {
+		v = v.Elem()
+	}
+
+	switch v.Kind() {
+	case reflect.Struct:
+		return conform.Struct(ctx, s)
+	case reflect.Slice, reflect.Array:
+		for i := 0; i < v.Len(); i++ {
+			elem := v.Index(i)
+			if elem.Kind() != reflect.Pointer {
+				if elem.CanAddr() {
+					elem = elem.Addr()
+				} else {
+					// Cannot take address, skip or handle (usually pointers are stored)
+					continue
+				}
+			}
+
+			// Unwrap element to check if it's a struct
+			elemVal := elem
+			if elemVal.Kind() == reflect.Pointer {
+				elemVal = elemVal.Elem()
+			}
+			if elemVal.Kind() == reflect.Struct {
+				if err := conform.Struct(ctx, elem.Interface()); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	default:
+		return nil
+	}
 }
 
 // setFieldValue sets the value of a struct field based on the string value.

@@ -63,3 +63,37 @@ func TestFormatErrors(t *testing.T) {
 	assert.NotNil(t, errMsg)
 	assert.Equal(t, expectedMsg, errMsg)
 }
+
+func TestFormatErrors_SlicePayload(t *testing.T) {
+	type Data struct {
+		Value int `json:"value" validate:"required,min=1"`
+	}
+
+	type DTO []*Data
+
+	payload := DTO{
+		{Value: 0},
+		{},
+		{Value: 1},
+		{Value: -1},
+	}
+
+	expectedMsg := []any{
+		map[string]any{"value": "value is a required field"},
+		map[string]any{"value": "value is a required field"},
+		nil,
+		map[string]any{"value": "value must be 1 or greater"},
+	}
+
+	err := validator.ValidateStruct(context.Background(), payload)
+
+	assert.NotNil(t, err)
+	assert.IsType(t, vd.ValidationErrors{}, err)
+
+	vErr := err.(vd.ValidationErrors)
+
+	errMsg := validator.FormatErrors(vErr)
+
+	assert.NotNil(t, errMsg)
+	assert.Equal(t, expectedMsg, errMsg)
+}
