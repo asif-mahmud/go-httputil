@@ -26,7 +26,8 @@ func LoggerWithSkips(skipPatterns ...string) gohttputil.Middleware {
 
 			s := httpsnoop.CaptureMetrics(next, w, r)
 
-			slog.Info("",
+			slog.InfoContext(r.Context(),
+				"",
 				golog.Path(r.URL.Path),
 				golog.Method(r.Method),
 				golog.Status(s.Code),
